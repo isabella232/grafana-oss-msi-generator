@@ -49,7 +49,7 @@ jobs:
             docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} /master/oss/ci-wrapper.sh 5.4.3
             #docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} cd /master/oss; python3 generator/build.py --build 5.4.3
             #docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} ls -al /master
-            docker cp msibuilder:/master/oss/scratch artifacts
+            docker cp msibuilder:/tmp/scratch artifacts
       - save_cache:
           paths:
             - ./venv

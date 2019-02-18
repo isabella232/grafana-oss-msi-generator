@@ -247,11 +247,6 @@ def main(file_loader, env, grafanaVersion, zipFile):
         ]
       }
     ]
-    
-    #file_content = generate_product_wxs(env, config, features)
-    #generate_product_wxs(env, PRODUCT_VERSION, 'scratch/product.wxs', target_dir.name)
-
-    #print(file_content)
     build_oss(zipFile, PRODUCT_VERSION, config, features)
 
 
@@ -269,38 +264,30 @@ if __name__ == '__main__':
     grafanaVersion = None
     grafanaHash = None
     isEnterprise = False
+    if not os.path.isdir('/tmp/dist'):
+        os.mkdir('/tmp/dist')
     # if a build version is specified, pull it
     if (args.build):
         grafanaVersion = args.build
     else:
-        grafanaVersion, grafanaHash, isEnterprise = detect_version()
+        grafanaVersion, grafanaHash, isEnterprise = detect_version('/tmp/dist')
         
     # check for enterprise flag
     if (args.enterprise):
         grafanaVersion = 'enterprise-{}'.format(args.build)
-    #
     #
     print('Detected Version: {}'.format(grafanaVersion))
     if (grafanaHash):
         print('Detected Hash: {}'.format(grafanaHash))
     print('Enterprise: {}'.format(isEnterprise))
     if isEnterprise:
-        zipFile = 'enterprise-dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '/tmp/dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
     else:
-        zipFile = 'dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '/tmp/dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
     print('ZipFile: {}'.format(zipFile))
-    #zipFile = 'dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
-    #zipFile = get_zip(grafanaVersion)
     # check if file downloaded
-
-    # create target dir
-    if not os.path.isdir('dist'):
-        os.mkdir('dist')
 
     if not os.path.isfile(zipFile):
         zipFile = get_zip(grafanaVersion, zipFile)
-        # move into place
-        #os.rename(zipFile, 'dist/{}'.format(zipFile))
-    #zipFile = 'dist/{}'.format(zipFile)
     main(file_loader, env, grafanaVersion, zipFile)
 
