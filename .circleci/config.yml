@@ -23,7 +23,6 @@ jobs:
           - v1-dependencies-{{ checksum "oss/requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
-
       - run:
           name: install dependencies
           command: |
@@ -31,22 +30,20 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
-
-      - setup_remote_docker
-
       - run:
           name: Copy files into remote container and run
           command: |
             set -x
-            git submodule init
-            git submodule update # uses circleci_rsa ssh key to access private repo
-            cd oss
-            sudo pip3 install -r requirements.txt
-            python3 generator/build.py --build 5.4.3
-            docker create -v /master --name master alpine:3.8 /bin/true
-            docker cp oss/scratch master:/
-            docker run --volumes-from master --name msibuilder grafana/wix-toolset-ci:latest /oss/wrapper.sh
-            docker cp msibuilder:/tmp/artifacts artifacts
+            #git submodule init
+            #git submodule update # uses circleci_rsa ssh key to access private repo
+            IMAGE_NAME=grafana/grafana-oss-msi-generator
+            VERSION=v1
+            docker build -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${VERSION} --no-cache=true oss/docker
+            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 oss/generator/build.py --build 5.4.3
+            #docker create -v /master --name master alpine:3.8 /bin/true
+            #docker cp oss/scratch master:/
+            #docker run --volumes-from master --name msibuilder grafana/wix-toolset-ci:latest /oss/wrapper.sh
+            #docker cp msibuilder:/tmp/artifacts artifacts
       - save_cache:
           paths:
             - ./venv
