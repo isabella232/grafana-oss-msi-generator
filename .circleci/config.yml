@@ -40,10 +40,8 @@ jobs:
             IMAGE_NAME=grafana/grafana-oss-msi-generator
             VERSION=v1
             docker build -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${VERSION} --no-cache=true oss/docker
+            docker create -v /master --name master alpine:3.8 /bin/true
             docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 oss/generator/build.py --build 5.4.3
-            #docker create -v /master --name master alpine:3.8 /bin/true
-            #docker cp oss/scratch master:/
-            #docker run --volumes-from master --name msibuilder grafana/wix-toolset-ci:latest /oss/wrapper.sh
             #docker cp msibuilder:/tmp/artifacts artifacts
       - save_cache:
           paths:
