@@ -9,13 +9,13 @@ jobs:
       - image: grafana/wix-toolset-ci:latest
     working_directory: ~/repo
     steps:
-      - run:
-          name: Setup Git-LFS
-          command: |
-              curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-              sudo apt-get update
-              sudo apt-get install -y git-lfs
-              sudo git lfs install             
+      #- run:
+      #    name: Setup Git-LFS
+      #    command: |
+      #        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+      #        sudo apt-get update
+      #        sudo apt-get install -y git-lfs
+      #        sudo git lfs install             
       - checkout
       # Download and cache dependencies
       - restore_cache:
