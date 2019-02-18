@@ -5,6 +5,7 @@ import glob
 import re
 import shutil
 
+
 def extract_zip(filename, target_dir):
     with zipfile.ZipFile(filename,"r") as zip_ref:
       zip_ref.extractall(target_dir)
@@ -36,16 +37,16 @@ def get_zip(version, target_filename):
     return filename
 
 
-def detect_version():
+def detect_version(dist_path):
     detectedVersion = ''
     detectedHash = ''
     isEnterprise = False
     # check if there is a dist directory
-    if os.path.isdir('dist'):
+    if os.path.isdir(dist_path + '/oss'):
         print("Located dist...")
         # grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
         # get files in directory matching pattern
-        fileList = glob.glob('dist/grafana*.windows-amd64.zip')
+        fileList = glob.glob(dist_path + '/grafana*.windows-amd64.zip')
         print(fileList)
         firstFile = fileList[0]
         p1 = re.search(r'grafana-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
@@ -57,10 +58,10 @@ def detect_version():
             detectedHash = p2.group(2)
         return detectedVersion, detectedHash, isEnterprise
 
-    if os.path.isdir('enterprise-dist'):
+    if os.path.isdir(dist_path + 'enterprise-dist'):
         # grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
         # get files in directory matching pattern
-        fileList = glob.glob('enterprise-dist/grafana*.windows-amd64.zip')
+        fileList = glob.glob(dist_path + '/enterprise-dist/grafana*.windows-amd64.zip')
         firstFile = fileList[0]
         p1 = re.search(r'grafana-enterprise-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
         p2 = re.search(r'grafana-enterprise-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
@@ -91,6 +92,7 @@ def generate_service_wxs(env, grafana_version, scratch_file, target_dir, nssm_ve
     shutil.copy2(scratch_file, target_dir)
 
 def generate_firewall_wxs(env, grafana_version, scratch_file, target_dir):
+    os.system("ls -al templates")
     template = env.get_template('common/grafana-firewall.wxs.j2')
     output = template.render(grafana_version=grafana_version)
     fh = open(scratch_file,'w')

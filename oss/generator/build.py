@@ -71,6 +71,8 @@ grafana_oss = {
 }
 
 def build_oss(zipFile, PRODUCT_VERSION, config, features):
+    # keep reference to source directory, will need to switch back and forth during the process
+    src_dir = os.getcwd()
     #target_dir = tempfile.TemporaryDirectory()
     if not os.path.isdir('/tmp/a'):
         os.mkdir('/tmp/a')
@@ -79,9 +81,10 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     print("Heat Harvesting")
     cgname = 'GrafanaX64'
     cgdir = 'GrafanaX64Dir'
-    if not os.path.isdir('scratch'):
-        os.mkdir('scratch')
-    outfile = 'scratch/grafana-oss.wxs'
+    if not os.path.isdir('/tmp/scratch'):
+        os.mkdir('/tmp/scratch')
+    os.chdir('/tmp/scratch')
+    outfile = 'grafana-oss.wxs'
     # important flags
     # -srd - prevents the parent directory name from being included in the harvest
     # -cg - component group to be referenced in main wxs file
@@ -105,7 +108,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
 
     #os.system('ls -al')
     shutil.copy2(outfile, target_dir_name)
-    nssm_file = get_nssm('cache', NSSM_VERSION)
+    nssm_file = get_nssm('/tmp/cache', NSSM_VERSION)
     if not os.path.isdir(target_dir_name + '/nssm'):
         os.mkdir(target_dir_name + '/nssm')
     extract_zip(nssm_file, target_dir_name + '/nssm')
@@ -113,10 +116,11 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #exit(0)
     #os.system('ls -al {}'.format(target_dir.name))
     print("HARVEST COMPLETE")
-    generate_firewall_wxs(env, PRODUCT_VERSION, 'scratch/grafana-firewall.wxs', target_dir_name)
-    generate_service_wxs(env, PRODUCT_VERSION, 'scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
-    generate_product_wxs(env, config, features, 'scratch/product.wxs', target_dir_name)
-    #os.system("cat scratch/product.wxs")
+    os.chdir(src_dir)
+    generate_firewall_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-firewall.wxs', target_dir_name)
+    generate_service_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
+    generate_product_wxs(env, config, features, '/tmp/scratch/product.wxs', target_dir_name)
+    #os.system("cat /tmp/scratch/product.wxs")
     print("GENERATE COMPLETE")
     copy_static_files(target_dir_name)
     print("COPY STATIC COMPLETE")
@@ -127,7 +131,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #exit -1
     #fi
     # for CANDLE, it needs to run in the working dir
-    os.chdir('scratch')
+    os.chdir('/tmp/scratch')
     try:
         filename = 'grafana-service.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
@@ -194,22 +198,17 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
         os.system(cmd)
     except Exception as ex:
         print(ex)
-    os.system('ls -al')
-    # copy to scratch
-    shutil.copy2('grafana.msi', '/oss/scratch')
-
-    #os.system('sleep 600')
-    #os.system('ls -al {}'.format(target_dir.name))
+    # copy to scratch with version included
+    msi_filename = '/tmp/scratch/grafana-{}.windows-amd64.msi'.format(PRODUCT_VERSION)
+    shutil.copy2('grafana.msi', msi_filename)
+    os.system('ls -al /tmp/scratch')
     # finally cleanup
     #extract_dir.cleanup()
-
-
 
 
 def main(file_loader, env, grafanaVersion, zipFile):
     UPGRADE_VERSION=OSS_UPGRADE_VERSION
     GRAFANA_VERSION=grafanaVersion
-    NSSM_VERSION='2.24'
     PRODUCT_NAME=OSS_PRODUCT_NAME
     PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other than a x.x.x.x format, numbers only
@@ -247,11 +246,6 @@ def main(file_loader, env, grafanaVersion, zipFile):
         ]
       }
     ]
-    
-    #file_content = generate_product_wxs(env, config, features)
-    #generate_product_wxs(env, PRODUCT_VERSION, 'scratch/product.wxs', target_dir.name)
-
-    #print(file_content)
     build_oss(zipFile, PRODUCT_VERSION, config, features)
 
 
@@ -269,38 +263,30 @@ if __name__ == '__main__':
     grafanaVersion = None
     grafanaHash = None
     isEnterprise = False
+    if not os.path.isdir('/tmp/dist'):
+        os.mkdir('/tmp/dist')
     # if a build version is specified, pull it
     if (args.build):
         grafanaVersion = args.build
     else:
-        grafanaVersion, grafanaHash, isEnterprise = detect_version()
+        grafanaVersion, grafanaHash, isEnterprise = detect_version('/tmp/dist')
         
     # check for enterprise flag
     if (args.enterprise):
         grafanaVersion = 'enterprise-{}'.format(args.build)
-    #
     #
     print('Detected Version: {}'.format(grafanaVersion))
     if (grafanaHash):
         print('Detected Hash: {}'.format(grafanaHash))
     print('Enterprise: {}'.format(isEnterprise))
     if isEnterprise:
-        zipFile = 'enterprise-dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '/tmp/dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
     else:
-        zipFile = 'dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '/tmp/dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
     print('ZipFile: {}'.format(zipFile))
-    #zipFile = 'dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
-    #zipFile = get_zip(grafanaVersion)
     # check if file downloaded
-
-    # create target dir
-    if not os.path.isdir('dist'):
-        os.mkdir('dist')
 
     if not os.path.isfile(zipFile):
         zipFile = get_zip(grafanaVersion, zipFile)
-        # move into place
-        #os.rename(zipFile, 'dist/{}'.format(zipFile))
-    #zipFile = 'dist/{}'.format(zipFile)
     main(file_loader, env, grafanaVersion, zipFile)
 

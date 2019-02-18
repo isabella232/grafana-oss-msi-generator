@@ -1,72 +1,15 @@
-# Python CircleCI 2.0 configuration file
 #
-# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
 #
 version: 2
 jobs:
   build:
     docker:
-      - image: grafana/wix-toolset-ci:latest
+      - image: grafana/grafana-oss-ci-msi-build
     working_directory: ~/repo
     steps:
-      - run:
-          name: Setup Git-LFS
-          command: |
-              curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-              sudo apt-get update
-              sudo apt-get install -y git-lfs
-              sudo git lfs install             
       - checkout
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "oss/requirements.txt" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
       - run:
-          name: install dependencies
+          name: Create OSS MSI
           command: |
-            cd oss
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-
-      - setup_remote_docker
-
-      - run:
-          name: Copy files into remote container and run
-          command: |
-            set -x
-            git submodule init
-            git submodule update # uses circleci_rsa ssh key to access private repo
-            cd oss
-            sudo pip3 install -r requirements.txt
-            python3 generator/build.py --build 5.4.3
-            docker create -v /master --name master alpine:3.8 /bin/true
-            docker cp oss/scratch master:/
-            docker run --volumes-from master --name msibuilder grafana/wix-toolset-ci:latest /oss/wrapper.sh
-            docker cp msibuilder:/tmp/artifacts artifacts
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "oss/requirements.txt" }}
-        
-      # run tests!
-      # this example uses Django's built-in test-runner
-      # other common Python testing frameworks include pytest and nose
-      # https://pytest.org
-      # https://nose.readthedocs.io
-      #- run:
-      #    name: run tests
-      #    command: |
-      #      . venv/bin/activate
-      #      cd master
-      #      python manage.py test
-      - store_artifacts:
-          path: artifacts
-          destination: builds
-
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
+            oss/ci-wrapper.sh 5.4.3
