@@ -201,7 +201,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     # copy to scratch with version included
     msi_filename = '/tmp/scratch/grafana-{}-amd64.msi'.format(PRODUCT_VERSION)
     shutil.copy2('grafana.msi', msi_filename)
-    os.system('ls -al')
+    os.system('ls -al /tmp/scratch')
     # finally cleanup
     #extract_dir.cleanup()
 
