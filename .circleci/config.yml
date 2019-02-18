@@ -42,9 +42,10 @@ jobs:
             docker build -t ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${VERSION} --no-cache=true oss/docker
             docker create -v /master --name master alpine:3.8 /bin/true
             ls -al
+            pwd
             docker cp . master:/
-            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 /oss/generator/build.py --build 5.4.3
-            #docker cp msibuilder:/tmp/artifacts artifacts
+            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 oss/generator/build.py --build 5.4.3
+            docker cp msibuilder:/oss/scratch artifacts
       - save_cache:
           paths:
             - ./venv
