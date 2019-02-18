@@ -81,7 +81,8 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     cgdir = 'GrafanaX64Dir'
     if not os.path.isdir('/tmp/scratch'):
         os.mkdir('/tmp/scratch')
-    outfile = '/tmp/scratch/grafana-oss.wxs'
+    os.chdir('/tmp/scratch')
+    outfile = 'grafana-oss.wxs'
     # important flags
     # -srd - prevents the parent directory name from being included in the harvest
     # -cg - component group to be referenced in main wxs file
