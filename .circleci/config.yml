@@ -43,10 +43,11 @@ jobs:
             docker create -v /master --name master alpine:3.8 /bin/true
             ls -al
             pwd
-            docker cp . master:/
+            docker cp master master:/repo/master
+            docker cp oss master:/repo/oss
             #docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 /master/oss/generator/build.py --build 5.4.3
-            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} ls -al /master
-            docker cp msibuilder:/master/oss/scratch artifacts
+            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} ls -al /repo
+            docker cp msibuilder:/repo/oss/scratch artifacts
       - save_cache:
           paths:
             - ./venv
