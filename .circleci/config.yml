@@ -45,7 +45,8 @@ jobs:
             pwd
             docker cp oss master:/
             docker cp master master:/
-            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 /master/oss/generator/build.py --build 5.4.3
+            #docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 /master/oss/generator/build.py --build 5.4.3
+            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} ls -al /master/oss
             docker cp msibuilder:/master/oss/scratch artifacts
       - save_cache:
           paths:
