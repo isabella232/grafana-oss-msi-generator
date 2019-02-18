@@ -79,9 +79,9 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     print("Heat Harvesting")
     cgname = 'GrafanaX64'
     cgdir = 'GrafanaX64Dir'
-    if not os.path.isdir('scratch'):
-        os.mkdir('scratch')
-    outfile = 'scratch/grafana-oss.wxs'
+    if not os.path.isdir('/tmp/scratch'):
+        os.mkdir('/tmp/scratch')
+    outfile = '/tmp/scratch/grafana-oss.wxs'
     # important flags
     # -srd - prevents the parent directory name from being included in the harvest
     # -cg - component group to be referenced in main wxs file
@@ -105,7 +105,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
 
     #os.system('ls -al')
     shutil.copy2(outfile, target_dir_name)
-    nssm_file = get_nssm('cache', NSSM_VERSION)
+    nssm_file = get_nssm('/tmp/cache', NSSM_VERSION)
     if not os.path.isdir(target_dir_name + '/nssm'):
         os.mkdir(target_dir_name + '/nssm')
     extract_zip(nssm_file, target_dir_name + '/nssm')
@@ -113,10 +113,10 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #exit(0)
     #os.system('ls -al {}'.format(target_dir.name))
     print("HARVEST COMPLETE")
-    generate_firewall_wxs(env, PRODUCT_VERSION, 'scratch/grafana-firewall.wxs', target_dir_name)
-    generate_service_wxs(env, PRODUCT_VERSION, 'scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
-    generate_product_wxs(env, config, features, 'scratch/product.wxs', target_dir_name)
-    #os.system("cat scratch/product.wxs")
+    generate_firewall_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-firewall.wxs', target_dir_name)
+    generate_service_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
+    generate_product_wxs(env, config, features, '/tmp/scratch/product.wxs', target_dir_name)
+    #os.system("cat /tmp/scratch/product.wxs")
     print("GENERATE COMPLETE")
     copy_static_files(target_dir_name)
     print("COPY STATIC COMPLETE")
@@ -127,7 +127,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #exit -1
     #fi
     # for CANDLE, it needs to run in the working dir
-    os.chdir('scratch')
+    os.chdir('/tmp/scratch')
     try:
         filename = 'grafana-service.wxs'
         cmd = '{} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 {}'.format(
@@ -196,7 +196,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
         print(ex)
     os.system('ls -al')
     # copy to scratch
-    shutil.copy2('grafana.msi', '/oss/scratch')
+    shutil.copy2('grafana.msi', '/tmp/scratch')
 
     #os.system('sleep 600')
     #os.system('ls -al {}'.format(target_dir.name))
