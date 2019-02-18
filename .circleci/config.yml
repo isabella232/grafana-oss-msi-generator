@@ -30,6 +30,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+      - setup_remote_docker
       - run:
           name: Copy files into remote container and run
           command: |
