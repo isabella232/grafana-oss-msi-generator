@@ -199,7 +199,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     except Exception as ex:
         print(ex)
     # copy to scratch with version included
-    msi_filename = '/tmp/scratch/grafana-{}-amd64.msi'.format(PRODUCT_VERSION)
+    msi_filename = '/tmp/scratch/grafana-{}.windows-amd64.msi'.format(PRODUCT_VERSION)
     shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al /tmp/scratch')
     # finally cleanup
