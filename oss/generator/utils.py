@@ -5,6 +5,7 @@ import glob
 import re
 import shutil
 
+
 def extract_zip(filename, target_dir):
     with zipfile.ZipFile(filename,"r") as zip_ref:
       zip_ref.extractall(target_dir)
@@ -91,6 +92,7 @@ def generate_service_wxs(env, grafana_version, scratch_file, target_dir, nssm_ve
     shutil.copy2(scratch_file, target_dir)
 
 def generate_firewall_wxs(env, grafana_version, scratch_file, target_dir):
+    os.system("ls -al templates")
     template = env.get_template('common/grafana-firewall.wxs.j2')
     output = template.render(grafana_version=grafana_version)
     fh = open(scratch_file,'w')

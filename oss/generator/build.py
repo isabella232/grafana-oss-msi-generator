@@ -71,6 +71,8 @@ grafana_oss = {
 }
 
 def build_oss(zipFile, PRODUCT_VERSION, config, features):
+    # keep reference to source directory, will need to switch back and forth during the process
+    src_dir = os.getcwd()
     #target_dir = tempfile.TemporaryDirectory()
     if not os.path.isdir('/tmp/a'):
         os.mkdir('/tmp/a')
@@ -114,6 +116,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #exit(0)
     #os.system('ls -al {}'.format(target_dir.name))
     print("HARVEST COMPLETE")
+    os.chdir(src_dir)
     generate_firewall_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-firewall.wxs', target_dir_name)
     generate_service_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
     generate_product_wxs(env, config, features, '/tmp/scratch/product.wxs', target_dir_name)
@@ -195,22 +198,17 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
         os.system(cmd)
     except Exception as ex:
         print(ex)
+    # copy to scratch with version included
+    msi_filename = '/tmp/scratch/grafana-{}-amd64.msi'.format(PRODUCT_VERSION)
+    shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al')
-    # copy to scratch
-    shutil.copy2('grafana.msi', '/tmp/scratch')
-
-    #os.system('sleep 600')
-    #os.system('ls -al {}'.format(target_dir.name))
     # finally cleanup
     #extract_dir.cleanup()
-
-
 
 
 def main(file_loader, env, grafanaVersion, zipFile):
     UPGRADE_VERSION=OSS_UPGRADE_VERSION
     GRAFANA_VERSION=grafanaVersion
-    NSSM_VERSION='2.24'
     PRODUCT_NAME=OSS_PRODUCT_NAME
     PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other than a x.x.x.x format, numbers only
