@@ -9,13 +9,13 @@ jobs:
       - image: circleci/python:3.6.1
     working_directory: ~/repo
     steps:
-      #- run:
-      #    name: Setup Git-LFS
-      #    command: |
-      #        curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
-      #        sudo apt-get update
-      #        sudo apt-get install -y git-lfs
-      #        sudo git lfs install             
+      - run:
+          name: Setup Git-LFS
+          command: |
+              curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+              sudo apt-get update
+              sudo apt-get install -y git-lfs
+              sudo git lfs install             
       - checkout
       # Download and cache dependencies
       - restore_cache:
@@ -24,12 +24,13 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
       - run:
-          name: install dependencies
+          name: pull git lfs files
           command: |
-            cd oss
-            python3 -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
+            git lfs pull
+            #cd oss
+            #python3 -m venv venv
+            #. venv/bin/activate
+            #pip install -r requirements.txt
       - setup_remote_docker
       - run:
           name: Copy files into remote container and run
@@ -45,7 +46,7 @@ jobs:
             pwd
             docker cp master master:/master
             docker cp oss master:/master
-            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} python3 /master/oss/generator/build.py --build 5.4.3
+            docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} cd /master/oss; python3 generator/build.py --build 5.4.3
             #docker run --volumes-from master --name msibuilder ${IMAGE_NAME}:${VERSION} ls -al /master
             docker cp msibuilder:/master/oss/scratch artifacts
       - save_cache:
