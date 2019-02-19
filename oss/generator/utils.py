@@ -46,6 +46,9 @@ def detect_version(dist_path):
     # get files in directory matching pattern
     fileList = glob.glob(dist_path + '/grafana*.windows-amd64.zip')
     print(fileList)
+    if len(fileList) == 0:
+        print('Skipping detection, no matches')
+        return
     firstFile = fileList[0]
     p1 = re.search(r'grafana-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
     p2 = re.search(r'grafana-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)

@@ -231,7 +231,6 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--premium', help='Include premium plugins', dest='premium', action='store_true')
     parser.add_argument('-e', '--enterprise', help='Use Enterprise build', dest='enterprise', action='store_true')
     parser.set_defaults(enterprise=False, premium=False)
-
     parser.add_argument('-b', '--build', help='build to download')
     args = parser.parse_args()
     file_loader = FileSystemLoader('templates')
@@ -242,8 +241,9 @@ if __name__ == '__main__':
     if not os.path.isdir('/master/dist'):
         os.mkdir('/master/dist')
     # if a build version is specified, pull it
-    if (args.build):
+    if args.build:
         grafanaVersion = args.build
+        print('Version Specified: {}'.format(grafanaVersion))
     else:
         grafanaVersion, grafanaHash, isEnterprise = detect_version('/master/dist')
         
