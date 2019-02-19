@@ -6,8 +6,8 @@
 # options are provided to give a build version that will download the zip, drop in to dist/enterprise-dist and do the same thing
 #
 # Expected paths and names 
-# /master/dist/grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
-# /master/enterprise-dist/grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
+# /tmp/dist/grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
+# /tmp/enterprise-dist/grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
 #
 # Optionally (mainly for testing), pass arguments to pull a specific build
 #   -b,--build 5.4.3
@@ -51,6 +51,7 @@ CANDLE='{} {}/candle.exe'.format(WINE_CMD, WIX_HOME)
 LIGHT='{} {}/light.exe'.format(WINE_CMD, WIX_HOME)
 HEAT='{} {}/heat.exe'.format(WINE_CMD, WIX_HOME)
 NSSM_VERSION='2.24'
+DIST_LOCATION='/tmp/dist'
 #############################
 #
 #############################
@@ -238,14 +239,14 @@ if __name__ == '__main__':
     grafanaVersion = None
     grafanaHash = None
     isEnterprise = False
-    if not os.path.isdir('/master/dist'):
-        os.mkdir('/master/dist')
+    if not os.path.isdir(DIST_LOCATION):
+        os.mkdir(DIST_LOCATION)
     # if a build version is specified, pull it
     if args.build:
         grafanaVersion = args.build
         print('Version Specified: {}'.format(grafanaVersion))
     else:
-        grafanaVersion, grafanaHash, isEnterprise = detect_version('/master/dist')
+        grafanaVersion, grafanaHash, isEnterprise = detect_version(DIST_LOCATION)
         
     # check for enterprise flag
     if (args.enterprise):
@@ -256,13 +257,13 @@ if __name__ == '__main__':
         print('Detected Hash: {}'.format(grafanaHash))
     print('Enterprise: {}'.format(isEnterprise))
     if isEnterprise:
-        zipFile = '/master/dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '{}/grafana-enterprise-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion)
     else:
         # the file can have a build hash
         if grafanaHash:
-            zipFile = '/master/dist/grafana-{}-{}.windows-amd64.zip'.format(grafanaVersion, grafanaHash)
+            zipFile = '{}/grafana-{}-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion, grafanaHash)
         else:
-            zipFile = '/master/dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
+            zipFile = '{}/grafana-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion)
     print('ZipFile: {}'.format(zipFile))
     # check if file downloaded
 

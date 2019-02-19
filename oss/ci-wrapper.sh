@@ -9,9 +9,9 @@ else
   # and the builds will be found in HOME
   pwd
   ls -al /home/xclient/repo/dist/
-  mkdir -p /master/dist
-  cp /home/xclient/repo/dist/*.zip /master/dist/
-  ls -al /master/dist
+  mkdir -p /tmp/dist
+  cp /home/xclient/repo/dist/*.zip /tmp/dist/
+  ls -al /tmp/dist
   cd /master
   ls -al
 fi
