@@ -6,8 +6,8 @@
 # options are provided to give a build version that will download the zip, drop in to dist/enterprise-dist and do the same thing
 #
 # Expected paths and names 
-# dist/grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
-# enterprise-dist/grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
+# /master/dist/grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
+# /master/enterprise-dist/grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
 #
 # Optionally (mainly for testing), pass arguments to pull a specific build
 #   -b,--build 5.4.3
@@ -106,31 +106,21 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     except Exception as ex:
         print(ex)
 
-    #os.system('ls -al')
     shutil.copy2(outfile, target_dir_name)
     nssm_file = get_nssm('/tmp/cache', NSSM_VERSION)
     if not os.path.isdir(target_dir_name + '/nssm'):
         os.mkdir(target_dir_name + '/nssm')
     extract_zip(nssm_file, target_dir_name + '/nssm')
-    #os.system("ls -l " + target_dir.name + '/nssm-2.24/*')
-    #exit(0)
-    #os.system('ls -al {}'.format(target_dir.name))
     print("HARVEST COMPLETE")
     os.chdir(src_dir)
     generate_firewall_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-firewall.wxs', target_dir_name)
     generate_service_wxs(env, PRODUCT_VERSION, '/tmp/scratch/grafana-service.wxs', target_dir_name, NSSM_VERSION)
     generate_product_wxs(env, config, features, '/tmp/scratch/product.wxs', target_dir_name)
-    #os.system("cat /tmp/scratch/product.wxs")
     print("GENERATE COMPLETE")
     copy_static_files(target_dir_name)
     print("COPY STATIC COMPLETE")
     #
-    # ${CANDLE} -ext WixFirewallExtension -ext WixUtilExtension -v -arch x64 grafana-service.wxs
-    #if [ ! -e grafana-service.wixobj ]; then
-    #echo "Candle failed"
-    #exit -1
-    #fi
-    # for CANDLE, it needs to run in the working dir
+    # CANDLE needs to run in the scratch dir
     os.chdir('/tmp/scratch')
     try:
         filename = 'grafana-service.wxs'
@@ -166,23 +156,12 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
         shutil.copy2('product.wixobj', target_dir_name)
     except Exception as ex:
         print(ex)
-    #os.system('sleep 600')
     print("CANDLE COMPLETE")
-    print("LIGHT COMPLETE")
-    #os.system('ls -al {}'.format(target_dir.name))
-    ######
-    # Relocate files
-    ######
-    #mv ${EXTRACT_TMP}/grafana-oss/* ${WIX_OUTPUT}
-    #mv ${EXTRACT_TMP}/nssm/* ${WIX_OUTPUT}
     ############################
     # LIGHT - Assemble the MSI
     ############################
     os.chdir(target_dir_name)
-    os.system('ls -al grafana-5.4.3')
     os.system('cp -pr nssm/nssm-2.24 .')
-    #os.system('ls -alR nssm-2.24')
-
     try:
         cmd = '''
           {} \
@@ -202,6 +181,7 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     msi_filename = '/tmp/scratch/grafana-{}.windows-amd64.msi'.format(PRODUCT_VERSION)
     shutil.copy2('grafana.msi', msi_filename)
     os.system('ls -al /tmp/scratch')
+    print("LIGHT COMPLETE")
     # finally cleanup
     #extract_dir.cleanup()
 
@@ -210,13 +190,9 @@ def main(file_loader, env, grafanaVersion, zipFile):
     UPGRADE_VERSION=OSS_UPGRADE_VERSION
     GRAFANA_VERSION=grafanaVersion
     PRODUCT_NAME=OSS_PRODUCT_NAME
-    PRODUCT_VERSION=GRAFANA_VERSION
+    #PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other than a x.x.x.x format, numbers only
-    PRODUCT_MSI_VERSION=GRAFANA_VERSION.split('-')[0]
-    #file_content = generate_firewall_wxs(env, PRODUCT_VERSION)
-    #print(file_content)
-    #file_content = generate_service_wxs(env, PRODUCT_VERSION, NSSM_VERSION)
-    #print(file_content)
+    PRODUCT_VERSION=GRAFANA_VERSION.split('-')[0]
 
     config = {
       'grafana_version': PRODUCT_VERSION,
@@ -252,8 +228,8 @@ def main(file_loader, env, grafanaVersion, zipFile):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Grafana MSI Generator',
         formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=90, width=110),add_help=True)
-    parser.add_argument('-p', '--premium', help='Flag to include premium plugins', dest='premium', action='store_true')
-    parser.add_argument('-e', '--enterprise', help='Flag to use enterprise build', dest='enterprise', action='store_true')
+    parser.add_argument('-p', '--premium', help='Include premium plugins', dest='premium', action='store_true')
+    parser.add_argument('-e', '--enterprise', help='Use Enterprise build', dest='enterprise', action='store_true')
     parser.set_defaults(enterprise=False, premium=False)
 
     parser.add_argument('-b', '--build', help='build to download')
@@ -263,13 +239,13 @@ if __name__ == '__main__':
     grafanaVersion = None
     grafanaHash = None
     isEnterprise = False
-    if not os.path.isdir('/tmp/dist'):
-        os.mkdir('/tmp/dist')
+    if not os.path.isdir('/master/dist'):
+        os.mkdir('/master/dist')
     # if a build version is specified, pull it
     if (args.build):
         grafanaVersion = args.build
     else:
-        grafanaVersion, grafanaHash, isEnterprise = detect_version('/tmp/dist')
+        grafanaVersion, grafanaHash, isEnterprise = detect_version('/master/dist')
         
     # check for enterprise flag
     if (args.enterprise):
@@ -280,9 +256,13 @@ if __name__ == '__main__':
         print('Detected Hash: {}'.format(grafanaHash))
     print('Enterprise: {}'.format(isEnterprise))
     if isEnterprise:
-        zipFile = '/tmp/dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
+        zipFile = '/master/dist/grafana-enterprise-{}.windows-amd64.zip'.format(grafanaVersion)
     else:
-        zipFile = '/tmp/dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
+        # the file can have a build hash
+        if grafanaHash:
+            zipFile = '/master/dist/grafana-{}-{}.windows-amd64.zip'.format(grafanaVersion, grafanaHash)
+        else:
+            zipFile = '/master/dist/grafana-{}.windows-amd64.zip'.format(grafanaVersion)
     print('ZipFile: {}'.format(zipFile))
     # check if file downloaded
 

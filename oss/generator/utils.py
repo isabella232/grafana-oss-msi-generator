@@ -25,54 +25,52 @@ def get_nssm(tmpPath, version):
 
 
 def get_zip(version, target_filename):
-    #target_filename = 'grafana-{}.windows-amd64.zip'.format(version)
-    #target_filename = 'grafana-enterprise-{}.windows-amd64.zip'.format(version)
     exists = os.path.isfile(target_filename)
     if exists:
         return target_filename
     url = 'https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-{}.windows-amd64.zip'.format(version)
     #url = 'https://dl.grafana.com/enterprise/release/grafana-enterprise-{}.windows-amd64.zip'.format(version)
-    print(url)
     filename = wget.download(url, out=target_filename, bar=wget.bar_thermometer)
     return filename
 
 
+#
+#
+#
 def detect_version(dist_path):
     detectedVersion = ''
     detectedHash = ''
     isEnterprise = False
-    # check if there is a dist directory
-    if os.path.isdir(dist_path + '/oss'):
-        print("Located dist...")
-        # grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
-        # get files in directory matching pattern
-        fileList = glob.glob(dist_path + '/grafana*.windows-amd64.zip')
-        print(fileList)
-        firstFile = fileList[0]
-        p1 = re.search(r'grafana-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
-        p2 = re.search(r'grafana-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
-        if p1:
-            detectedVersion = p1.group(1)
-        if p2:
-            detectedVersion = p2.group(1)
-            detectedHash = p2.group(2)
-        return detectedVersion, detectedHash, isEnterprise
+    print("Detecting Version...")
+    # grafana-6.0.0-ca0bc2c5pre3.windows-amd64.zip
+    # get files in directory matching pattern
+    fileList = glob.glob(dist_path + '/grafana*.windows-amd64.zip')
+    print(fileList)
+    firstFile = fileList[0]
+    p1 = re.search(r'grafana-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
+    p2 = re.search(r'grafana-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
+    if p1:
+        detectedVersion = p1.group(1)
+    if p2:
+        detectedVersion = p2.group(1)
+        detectedHash = p2.group(2)
+    return detectedVersion, detectedHash, isEnterprise
 
-    if os.path.isdir(dist_path + 'enterprise-dist'):
-        # grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
-        # get files in directory matching pattern
-        fileList = glob.glob(dist_path + '/enterprise-dist/grafana*.windows-amd64.zip')
-        firstFile = fileList[0]
-        p1 = re.search(r'grafana-enterprise-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
-        p2 = re.search(r'grafana-enterprise-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
-        if p1:
-            detectedVersion = p1.group(1)
-            isEnterprise = True
-        if p2:
-            detectedVersion = p2.group(1)
-            detectedHash = p2.group(2)
-            isEnterprise = True
-        return detectedVersion, detectedHash, isEnterprise
+    #if os.path.isdir(dist_path + 'enterprise-dist'):
+    #    # grafana-enterprise-6.0.0-29b28127pre3.windows-amd64.zip
+    #    # get files in directory matching pattern
+    #    fileList = glob.glob(dist_path + '/enterprise-dist/grafana*.windows-amd64.zip')
+    #    firstFile = fileList[0]
+    #    p1 = re.search(r'grafana-enterprise-(\d\.\d\.\d)\.windows-amd64.zip$', firstFile)
+    #    p2 = re.search(r'grafana-enterprise-(\d\.\d\.\d)-(.*)\.windows-amd64.zip$', firstFile)
+    #    if p1:
+    #        detectedVersion = p1.group(1)
+    #        isEnterprise = True
+    #    if p2:
+    #        detectedVersion = p2.group(1)
+    #        detectedHash = p2.group(2)
+    #        isEnterprise = True
+    #    return detectedVersion, detectedHash, isEnterprise
 
 
 def generate_product_wxs(env, config, features, scratch_file, target_dir):
