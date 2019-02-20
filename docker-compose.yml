@@ -1,0 +1,12 @@
+version: '3'
+services:
+  wix:
+    image: grafana/grafana-oss-ci-msi-build
+    command: /master/ci-wrapper.sh --build 5.4.3
+    # important: wine is setup for the user xclient
+    user: xclient
+    volumes:
+      - ./temp:/master/dist
+      - ./out:/tmp/scratch
+    environment:
+      - TERM=linux
