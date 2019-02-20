@@ -8,6 +8,5 @@ RUN apt-get install -y \
     apt-get install -y git-lfs && \
     git lfs install
 COPY oss /master
-RUN ls -l /master && \
-    chmod a+rw /master
+RUN ls -l /master
 USER xclient
