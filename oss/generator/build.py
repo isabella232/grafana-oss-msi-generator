@@ -41,9 +41,12 @@ OSS_PRODUCT_NAME="Grafana OSS"
 ENTERPRISE_UPGRADE_VERSION='d534ec50-476b-4edc-a25e-fe854c949f4f'
 ENTERPRISE_PRODUCT_NAME="Grafana Enterprise"
 
-
 #############################
-# paths
+# CONSTANTS
+#############################
+MSI_GENERATOR_VERSION='1.0.0'
+#############################
+# PATHS
 #############################
 WIX_HOME='/home/xclient/wix'
 WINE_CMD='/usr/bin/wine64' # or just wine for 32bit
@@ -71,14 +74,46 @@ grafana_oss = {
   ]
 }
 
-def build_oss(zipFile, PRODUCT_VERSION, config, features):
+#
+#
+#
+def remove_long_paths():
+    print("Removing long pathed files - these are not needed to run grafana")
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.test.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.test.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.test.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.test.ts')
+    os.remove('/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.ts')
+
+def build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features):
     # keep reference to source directory, will need to switch back and forth during the process
     src_dir = os.getcwd()
     #target_dir = tempfile.TemporaryDirectory()
     if not os.path.isdir('/tmp/a'):
         os.mkdir('/tmp/a')
     target_dir_name = '/tmp/a'
-    extract_zip(zipFile, target_dir_name)
+    extract_zip(zip_file, target_dir_name)
+    # the zip file contains a version, which will not work when upgrading, and ends up with paths longer
+    # than light.exe can parse (windows issue)
+    # Once extracted, rename it to grafana without the version included
+    zip_file_path = '{}/{}'.format(target_dir_name, extracted_name)
+    rename_to = '{}/grafana'.format(target_dir_name)
+    print('Renaming extracted path {} to {}'.format(zip_file_path, rename_to))
+    os.system('ls -al /tmp/a')
+    print("Before:")
+    os.rename(zip_file_path, rename_to)
+    print("After:")
+    os.system('ls -al /tmp/a')
+    # cleanup due to MSI API limitation
+    remove_long_paths()
+    #
+    # HEAT
+    #
+    # Collects the files from the path given and generates wxs file
+    #
     print("Heat Harvesting")
     cgname = 'GrafanaX64'
     cgdir = 'GrafanaX64Dir'
@@ -187,9 +222,9 @@ def build_oss(zipFile, PRODUCT_VERSION, config, features):
     #extract_dir.cleanup()
 
 
-def main(file_loader, env, grafanaVersion, zipFile):
+def main(file_loader, env, grafana_version, zip_file, extracted_name):
     UPGRADE_VERSION=OSS_UPGRADE_VERSION
-    GRAFANA_VERSION=grafanaVersion
+    GRAFANA_VERSION=grafana_version
     PRODUCT_NAME=OSS_PRODUCT_NAME
     #PRODUCT_VERSION=GRAFANA_VERSION
     # MSI version cannot have anything other than a x.x.x.x format, numbers only
@@ -223,10 +258,12 @@ def main(file_loader, env, grafanaVersion, zipFile):
         ]
       }
     ]
-    build_oss(zipFile, PRODUCT_VERSION, config, features)
+    build_oss(zip_file, extracted_name, PRODUCT_VERSION, config, features)
 
 
 if __name__ == '__main__':
+    print('MSI Generator Version: {}'.format(MSI_GENERATOR_VERSION))
+
     parser = argparse.ArgumentParser(description='Grafana MSI Generator',
         formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=90, width=110),add_help=True)
     parser.add_argument('-p', '--premium', help='Include premium plugins', dest='premium', action='store_true')
@@ -236,38 +273,40 @@ if __name__ == '__main__':
     args = parser.parse_args()
     file_loader = FileSystemLoader('templates')
     env = Environment(loader=file_loader)
-    grafanaVersion = None
-    grafanaHash = None
-    isEnterprise = False
+    grafana_version = None
+    grafana_hash = None
+    is_enterprise = False
     if not os.path.isdir(DIST_LOCATION):
         os.mkdir(DIST_LOCATION)
     # if a build version is specified, pull it
     if args.build:
-        grafanaVersion = args.build
-        print('Version Specified: {}'.format(grafanaVersion))
+        grafana_version = args.build
+        print('Version Specified: {}'.format(grafana_version))
     else:
-        grafanaVersion, grafanaHash, isEnterprise = detect_version(DIST_LOCATION)
+        grafana_version, grafana_hash, is_enterprise = detect_version('/home/xclient/repo/dist')
         
     # check for enterprise flag
     if (args.enterprise):
-        grafanaVersion = 'enterprise-{}'.format(args.build)
+        grafana_version = 'enterprise-{}'.format(args.build)
     #
-    print('Detected Version: {}'.format(grafanaVersion))
-    if (grafanaHash):
-        print('Detected Hash: {}'.format(grafanaHash))
-    print('Enterprise: {}'.format(isEnterprise))
-    if isEnterprise:
-        zipFile = '{}/grafana-enterprise-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion)
+    print('Detected Version: {}'.format(grafana_version))
+    if (grafana_hash):
+        print('Detected Hash: {}'.format(grafana_hash))
+    print('Enterprise: {}'.format(is_enterprise))
+    if is_enterprise:
+        zip_file = '{}/grafana-enterprise-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version)
+        extracted_name = 'grafana-enterprise-{}'.format(grafana_version)
     else:
         # the file can have a build hash
-        if grafanaHash:
-            zipFile = '{}/grafana-{}-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion, grafanaHash)
+        if grafana_hash:
+            zip_file = '{}/grafana-{}-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version, grafana_hash)
+            extracted_name = 'grafana-{}-{}'.format(grafana_version, grafana_hash)
         else:
-            zipFile = '{}/grafana-{}.windows-amd64.zip'.format(DIST_LOCATION, grafanaVersion)
-    print('ZipFile: {}'.format(zipFile))
+            zip_file = '{}/grafana-{}.windows-amd64.zip'.format(DIST_LOCATION, grafana_version)
+            extracted_name = 'grafana-{}'.format(grafana_version)
+    print('ZipFile: {}'.format(zip_file))
     # check if file downloaded
 
-    if not os.path.isfile(zipFile):
-        zipFile = get_zip(grafanaVersion, zipFile)
-    main(file_loader, env, grafanaVersion, zipFile)
-
+    if not os.path.isfile(zip_file):
+        zip_file = get_zip(grafana_version, zip_file)
+    main(file_loader, env, grafana_version, zip_file, extracted_name)
