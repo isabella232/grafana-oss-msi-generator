@@ -90,7 +90,7 @@ def remove_long_paths():
       '/tmp/a/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.ts'
     ]
     for file in long_files:
-        if os.path.exists(file):
+        if os.path.isfile(file):
             print('Removing: {}'.format(file))
             os.remove(file)
         else:
